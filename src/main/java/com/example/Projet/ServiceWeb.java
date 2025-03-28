@@ -1,36 +1,50 @@
 package com.example.Projet;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
+@RequestMapping("/cars")
 public class ServiceWeb {
 
-    ArrayList<Car>cars = new ArrayList<Car>();
+    private final List<Car> cars = new ArrayList<>();
 
     public ServiceWeb() {
-        Car car = new Car("AA11BB", "ferrari", 2000);
-        cars.add(car);
-        car = new Car("BB22CC", "porsche", 1000);
-        cars.add(car);
-        car = new Car("CC33DD", "peugeot", 500);
-        cars.add(car);
+        cars.add(new Car("AA11BB", "ferrari", 2000));
+        cars.add(new Car("BB22CC", "porsche", 1000));
+        cars.add(new Car("CC33DD", "peugeot", 500));
     }
 
+    // Liste complète
+    @GetMapping
+    public List<Car> allCars() {
+        return cars;
+    }
 
-    @GetMapping("/cars/{plateNumber}")
-    public Car disBonjour(@PathVariable("plateNumber") String plaque){
-        int i=0;
-        while(i<cars.size() && cars.get(i).getPlateNumber().equals(plaque)==false){
-            i++;
-        }
-        if(i < cars.size()){
-            return cars.get(i);
+    // Recherche par plaque
+    @GetMapping("/plate/{plateNumber}")
+    public ResponseEntity<Car> getCarByPlate(@PathVariable String plateNumber) {
+        return cars.stream()
+                .filter(car -> car.getPlateNumber().equalsIgnoreCase(plateNumber))
+                .findFirst()
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Recherche par prix
+    @GetMapping("/price/{price}")
+    public ResponseEntity<List<Car>> getCarsByPrice(@PathVariable int price) {
+        List<Car> filtered = cars.stream()
+                .filter(car -> car.getPrice() == price)
+                .toList();
+
+        if (filtered.isEmpty()) {
+            return ResponseEntity.notFound().build();
         } else {
-            return null;
+            return ResponseEntity.ok(filtered);
         }
     }
 }
